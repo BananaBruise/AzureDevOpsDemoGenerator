@@ -94,7 +94,7 @@ $body = @"
   ]
 }
 "@
-Invoke-RestMethod -method post -Uri "$uri/$api" -Headers $authz -body $body -ContentType application/json 
+Invoke-RestMethod -method post -Uri "$uri/$api" -Headers $authz -body $body -ContentType "application/json" 
 
 ###Soft Delete repository
 $repoId = "533894e4-a974-46ab-9dc0-69efa391e68b" #must use ID (no name)
@@ -105,9 +105,36 @@ invoke-restmethod -method Delete -uri "$uri/$api" -Headers $authz
 ##Pipeline/Build workflows
 ##The following sections should
 ##  Create build definition
-##  Execute/Queue build definition
 ##  Create library file for custom properties
-###
+###List Build Definition
+$api = "_apis/build/definitions?api-version=5.0"
+$result = Invoke-restmethod -method get -Uri "$uri/$api" -Headers $authz 
+
+###Get Build Definition
+$DefinitionId = "28"#get it from List Build Definition | select -expandproperty value | select name,id
+$api = "_apis/build/definitions/$DefinitionId`?api-version=5.0"
+$result = Invoke-restmethod -method get -Uri "$uri/$api" -Headers $authz 
+
+###Get variable group (library)
+$groupName = 'test company 1'
+$api = "_apis/distributedtask/variablegroups?groupname=$groupName`&api-version=5.0-preview.1"
+$result = Invoke-restmethod -method get -Uri "$uri/$api" -Headers $authz 
+
+###Get agent pool
+$api = "https://dev.azure.com/rw2/_apis/distributedtask/pools/?api-version=5.1"
+$result = Invoke-restmethod -method get -Uri "$api" -Headers $authz 
+$pipeline = $result.value | where name -match 'Azure Pipelines' | select name,id
+
+###Get task group
+$api = "_apis/distributedtask/taskgroups?api-version=5.0-preview.1"
+$result = Invoke-restmethod -method get -Uri "$uri/$api" -Headers $authz 
+$tasks = $result.value.tasks | convertto-json
+
+###Create Build Definition
+$api = "_apis/build/definitions?api-version=5.0"
+$body = get-content .\buildDefinition.json #TODO - figure the json out
+Invoke-restmethod -method post -Uri "$uri/$api" -Headers $authz -body $body -ContentType "application/json"
+
 
 
 

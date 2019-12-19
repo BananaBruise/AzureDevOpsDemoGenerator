@@ -1,0 +1,22 @@
+{
+    "variables": {
+      "DarkAccentColor": {
+        "value": "#69385C"
+      },
+      "location": {
+        "value": "centralus"
+      },
+      "project-name": {
+        "value": "ClientA"
+      },
+      "res-group-name": {
+        "value": "ClientA-tf-state"
+      },
+      "storage-account-name": {
+          "value": "ClientAtfstate"
+      }
+    },
+    "type": "Vsts",
+    "name": "ClientA",
+    "description": "A test variable group"
+  }

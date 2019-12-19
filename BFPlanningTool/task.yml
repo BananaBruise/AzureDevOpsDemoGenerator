@@ -1,0 +1,84 @@
+pool:
+  name: Azure Pipelines
+  demands:
+  - npm
+  - node.js
+
+#Your build pipeline references an undefined variable named ‘PrimaryColor’. Create or edit the build pipeline for this YAML file, define the variable on the Variables tab. See https://go.microsoft.com/fwlink/?linkid=865972
+#Your build pipeline references an undefined variable named ‘DarkAccentColor’. Create or edit the build pipeline for this YAML file, define the variable on the Variables tab. See https://go.microsoft.com/fwlink/?linkid=865972
+#Your build pipeline references an undefined variable named ‘LightAccent100Color’. Create or edit the build pipeline for this YAML file, define the variable on the Variables tab. See https://go.microsoft.com/fwlink/?linkid=865972
+#Your build pipeline references an undefined variable named ‘LightAccent200Color’. Create or edit the build pipeline for this YAML file, define the variable on the Variables tab. See https://go.microsoft.com/fwlink/?linkid=865972
+#Your build pipeline references an undefined variable named ‘LightAccent300Color’. Create or edit the build pipeline for this YAML file, define the variable on the Variables tab. See https://go.microsoft.com/fwlink/?linkid=865972
+#Your build pipeline references an undefined variable named ‘PrimaryColor’. Create or edit the build pipeline for this YAML file, define the variable on the Variables tab. See https://go.microsoft.com/fwlink/?linkid=865972
+#Your build pipeline references an undefined variable named ‘DarkAccentColor’. Create or edit the build pipeline for this YAML file, define the variable on the Variables tab. See https://go.microsoft.com/fwlink/?linkid=865972
+#Your build pipeline references an undefined variable named ‘LightAccent100Color’. Create or edit the build pipeline for this YAML file, define the variable on the Variables tab. See https://go.microsoft.com/fwlink/?linkid=865972
+#Your build pipeline references an undefined variable named ‘LightAccent200Color’. Create or edit the build pipeline for this YAML file, define the variable on the Variables tab. See https://go.microsoft.com/fwlink/?linkid=865972
+#Your build pipeline references an undefined variable named ‘LightAccent300Color’. Create or edit the build pipeline for this YAML file, define the variable on the Variables tab. See https://go.microsoft.com/fwlink/?linkid=865972
+#Your build pipeline references an undefined variable named ‘project-name’. Create or edit the build pipeline for this YAML file, define the variable on the Variables tab. See https://go.microsoft.com/fwlink/?linkid=865972
+
+steps:
+- task: Npm@1
+  displayName: 'npm install'
+  inputs:
+    verbose: false
+
+- task: UseRubyVersion@0
+  displayName: 'Use Ruby >= 2.4'
+
+- script: 'gem install sass'
+  displayName: 'Command Line Script'
+
+- bash: |
+   sed -i "s|%%PrimaryColor%%|$(PrimaryColor)|g" _variables.scss
+   sed -i "s|%%DarkAccentColor%%|$(DarkAccentColor)|g" _variables.scss
+   sed -i "s|%%LightAccent100Color%%|$(LightAccent100Color)|g" _variables.scss
+   sed -i "s|%%LightAccent200Color%%|$(LightAccent200Color)|g" _variables.scss
+   sed -i "s|%%LightAccent300Color%%|$(LightAccent300Color)|g" _variables.scss
+   
+   sed -i "s|%%PrimaryColor%%|$(PrimaryColor)|g" App.js
+   sed -i "s|%%DarkAccentColor%%|$(DarkAccentColor)|g" App.js
+   sed -i "s|%%LightAccent100Color%%|$(LightAccent100Color)|g" App.js
+   sed -i "s|%%LightAccent200Color%%|$(LightAccent200Color)|g" App.js
+   sed -i "s|%%LightAccent300Color%%|$(LightAccent300Color)|g" App.js
+  workingDirectory: Customizations/
+  displayName: 'Replace Customization Variables'
+
+- task: CopyFiles@2
+  displayName: 'Copy Customization Logos'
+  inputs:
+    SourceFolder: 'Customizations/$(project-name)'
+    Contents: '*.png'
+    TargetFolder: '$(System.DefaultWorkingDirectory)/assets/images'
+    OverWrite: true
+
+- task: CopyFiles@2
+  displayName: 'Copy Customization SCSS'
+  inputs:
+    SourceFolder: Customizations
+    Contents: '*.scss'
+    TargetFolder: '$(System.DefaultWorkingDirectory)/styles/partials'
+    OverWrite: true
+
+- task: CopyFiles@2
+  displayName: 'Copy Customization App.js'
+  inputs:
+    SourceFolder: Customizations
+    Contents: App.js
+    TargetFolder: '$(System.DefaultWorkingDirectory)/modules/'
+    OverWrite: true
+
+- task: Grunt@0
+  displayName: 'Run Grunt task'
+  inputs:
+    gruntFile: Gruntfile.js
+    targets: prod
+
+- task: ArchiveFiles@2
+  displayName: 'Archive files'
+  inputs:
+    rootFolderOrFile: '$(System.DefaultWorkingDirectory)'
+    includeRootFolder: false
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish artifacts: drop'
+
