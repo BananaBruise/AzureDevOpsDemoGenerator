@@ -2,21 +2,61 @@
 ##  Initialization
 ##  Git Workflows
 ##  Pipeline/Build Workflows
+##  Relesae Worklows
+##  Notification
 
 ##initialize
-$pat = "4lsl5d24qeln3nxkczpav6n4ab2knoyloohcbu47yv4fjrbjrsya"
-$encodedPat = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes(":$pat"))
+function Initialize-AzToken {
+    Param (
+        [Parameter(Mandatory=$true)]
+        [string]$PAT, #sample PAT"4lsl5d24qeln3nxkczpav6n4ab2knoyloohcbu47yv4fjrbjrsya"
+    )
+$encodedPat = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes(":$PAT"))
 $authz = @{Authorization = "Basic $encodedPat"}
 
-$organizationName = "rw2"
-$projectName = "BF%20Estimate%20Planning"
-$uri = "https://dev.azure.com/$organizationName/$projectName"
+
+return authz
+}
+
+function Initial-AzURI {
+    param (
+        [Parameter(Mandatory=$true)]
+        [string]$ProjectName,#sample "BF%20Estimate%20Planning"
+        [string]$OrganizationName = "rw2",
+        [switch]$ShortURI,
+        [switch]$VSRM
+    )
+
+    $uri = "https://dev.azure.com/$OrganizationName"
+    
+    if(-not $ShortURI){
+        $uri = "$uri/$ProjectName"
+    }
+    if($VSRM){
+        $uri = $uri.insert(8,"vsrm.")
+    }
+
+    return $uri
+}
+
+
 
 ##Git Workflows - 
 ##the following section should do the following:
 ##  Fork and create new repo for customer 
 ##  Upload customization and commit to new repo
 ##  Soft delete the repo
+function Fork-AzGitRepo {
+
+}
+
+function Push-AzGitRepo {
+
+}
+
+function Delete-AzGitRepo {
+    
+}
 ###Git list repositories
 $api = "_apis/git/repositories?api-version=5.1"
 $result = Invoke-restmethod -method get -Uri "$uri/$api" -Headers $authz 
@@ -135,40 +175,30 @@ $api = "_apis/build/definitions?api-version=5.0"
 $body = get-content .\buildDefinition.json #TODO - figure the json out
 Invoke-restmethod -method post -Uri "$uri/$api" -Headers $authz -body $body -ContentType "application/json"
 
+###Create variable group
+$api = "_apis/distributedtask/variablegroups?api-version=5.0-preview.1"
+$body = get-content .\variableGroup.json
+Invoke-restmethod -method post -Uri "$uri/$api" -Headers $authz -body $body -ContentType "application/json"
+
+##Release workflow
+####api use different instance and newer version
+###get release
+$api = "https://vsrm.dev.azure.com/rw2/BF%20Estimate%20Planning/_apis/release/definitions?api-version=5.1"
+$result = Invoke-restmethod -method get -Uri "$api" -Headers $authz
+$id = $result.value | select name,id 
+###create release definition
+$api = "https://vsrm.dev.azure.com/rw2/BF%20Estimate%20Planning/_apis/release/definitions?api-version=5.1"
+$body = get-content .\releaseDefinition.json 
+Invoke-restmethod -method post -Uri "$api" -Headers $authz -body $body -contentType "application/json"
+
+
+
+##Notification Workflow
 
 
 
 
-##sample code
-
-$body = @"
-{
-    "accessToken": "_PAT_",
-    "organizationName": "_ORG_",
-    "templateName": "_TEMPLATENAME_",
-    "users": [{
-        "email":  "_EMAIL_",
-        "ProjectName":  "_PROJECTNAME_"
-    }]
-}
-"@
-
-Write-Host "Provisioning project ..." -ForegroundColor Blue -BackgroundColor Cyan
-$resp = Invoke-WebRequest -Uri "https://azuredevopsdemogenerator.azurewebsites.net/api/environment/create" -Method "POST" -ContentType application/json -Body $body
-
-$returnCode = $resp.StatusCode
-$returnStatus = $resp.StatusDescription
-
-if ($returnCode -ne "202") {
-    Write-Host "Create project failed - $returnCode $returnStatus" -ForegroundColor White -BackgroundColor Red
-    break
-}
-Write-Host "Project queued ... awaiting completion ..." -ForegroundColor Blue -BackgroundColor Cyan
-
-$method = "GET"
-$listurl = "https://dev.azure.com/culater/_apis/projects?api-version=5.1-preview.4"
-$resp = Invoke-RestMethod -Uri $listurl -Method $method -Headers @{Authorization = "Basic $encodedPat"}
-
+##samples
 #Wait till project is finished deploying
 while (1 -eq 1)
 {
@@ -194,3 +224,4 @@ while (1 -eq 1)
 Write-Host "Project provisioned successfully" -ForegroundColor Blue -BackgroundColor Cyan
 
 ```
+##Run

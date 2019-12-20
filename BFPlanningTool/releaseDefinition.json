@@ -1,0 +1,125 @@
+{
+    "source": "undefined",
+    "revision": 1,
+    "description": null,
+    "createdBy": null,
+    "createdOn": "0001-01-01T00:00:00",
+    "modifiedBy": null,
+    "modifiedOn": "0001-01-01T00:00:00",
+    "isDeleted": false,
+    "variables": {},
+    "variableGroups": [],
+    "environments": [
+      {
+        "id": 0,
+        "name": "ClientA",
+        "variables": {},
+        "variableGroups": [],
+        "preDeployApprovals": {
+            "approvals": [
+                {
+                    "rank": 1,
+                    "isAutomated": true,
+                    "isNotificationOn": false,
+                    "id": 45
+                }
+            ],
+            "approvalOptions": {
+                "requiredApproverCount": null,
+                "releaseCreatorCanBeApprover": false,
+                "autoTriggeredAndPreviousEnvironmentApprovedCanBeSkipped": false,
+                "enforceIdentityRevalidation": false,
+                "timeoutInMinutes": 0,
+                "executionOrder": 1
+            }
+        },
+        "postDeployApprovals": {
+            "approvals": [
+                {
+                    "rank": 1,
+                    "isAutomated": true,
+                    "isNotificationOn": false,
+                    "id": 47
+                }
+            ],
+            "approvalOptions": {
+                "requiredApproverCount": null,
+                "releaseCreatorCanBeApprover": false,
+                "autoTriggeredAndPreviousEnvironmentApprovedCanBeSkipped": false,
+                "enforceIdentityRevalidation": false,
+                "timeoutInMinutes": 0,
+                "executionOrder": 2
+            }
+        },
+        "deployPhases": [
+          {
+            "deploymentInput": {
+                "parallelExecution": {
+                    "parallelExecutionType": 0
+                },
+                "agentSpecification": {
+                    "identifier": "vs2017-win2016"
+                },
+                "skipArtifactsDownload": false,
+                "artifactsDownloadInput": {
+                    "downloadInputs": []
+                },
+                "queueId": 87,
+                "demands": [],
+                "enableAccessToken": false,
+                "timeoutInMinutes": 0,
+                "jobCancelTimeoutInMinutes": 1,
+                "condition": "succeeded()",
+                "overrideInputs": {}
+            },
+            "rank": 1,
+            "phaseType": "agentBasedDeployment",
+            "name": "Run on agent",
+            "workflowTasks": []
+          }
+        ],
+        "environmentOptions": {
+          "skipArtifactsDownload": false,
+          "timeoutInMinutes": 0,
+          "enableAccessToken": false,
+          "publishDeploymentStatus": false,
+          "badgeEnabled": false,
+          "autoLinkWorkItems": false,
+          "pullRequestDeploymentEnabled": false
+        },
+        "demands": [],
+        "conditions": [],
+        "executionPolicy": {
+          "concurrencyCount": 0,
+          "queueDepthCount": 0
+        },
+        "schedules": [],
+        "retentionPolicy": {
+          "daysToKeep": 30,
+          "releasesToKeep": 3,
+          "retainBuild": true
+        },
+        "properties": {},
+        "preDeploymentGates": {
+          "id": 0,
+          "gatesOptions": null,
+          "gates": []
+        },
+        "postDeploymentGates": {
+          "id": 0,
+          "gatesOptions": null,
+          "gates": []
+        },
+        "environmentTriggers": []
+      }
+    ],
+    "artifacts": [],
+    "triggers": [],
+    "releaseNameFormat": null,
+    "tags": [],
+    "properties": {},
+    "id": 0,
+    "name": "ClientA",
+    "projectReference": null,
+    "_links": {}
+  }
