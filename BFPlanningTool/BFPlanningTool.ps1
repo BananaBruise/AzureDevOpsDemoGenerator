@@ -1,42 +1,52 @@
-##We break interaction with Azure DevOps API into a couple areas
+##Azure DevOps API functions for such use cases:
 ##  Initialization
 ##  Git Workflows
 ##  Pipeline/Build Workflows
 ##  Relesae Worklows
 ##  Notification
 
-##initialize
+##Initialization
 function Initialize-AzToken {
-    Param (
-        [Parameter(Mandatory=$true)]
-        [string]$PAT, #sample PAT"4lsl5d24qeln3nxkczpav6n4ab2knoyloohcbu47yv4fjrbjrsya"
-    )
-$encodedPat = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes(":$PAT"))
-$authz = @{Authorization = "Basic $encodedPat"}
+  <#
+  .SYNOPSIS
+  Creates DevOps authorization token based on Personal Access Token (PAT)
+  #>
+  Param (
+      [Parameter(Mandatory=$true)]
+      [string]$PAT#sample PAT"4lsl5d24qeln3nxkczpav6n4ab2knoyloohcbu47yv4fjrbjrsya"
+  )
 
+  $encodedPat = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes(":$PAT"))
+  $authz = @{Authorization = "Basic $encodedPat"}
 
-return authz
+  return $authz
 }
 
-function Initial-AzURI {
-    param (
-        [Parameter(Mandatory=$true)]
-        [string]$ProjectName,#sample "BF%20Estimate%20Planning"
-        [string]$OrganizationName = "rw2",
-        [switch]$ShortURI,
-        [switch]$VSRM
-    )
+function Initialize-AzURI {
+  <#
+  .SYNOPSIS
+  Creates DevOps URI down to OrganizationName/Project level.
 
-    $uri = "https://dev.azure.com/$OrganizationName"
-    
-    if(-not $ShortURI){
-        $uri = "$uri/$ProjectName"
-    }
-    if($VSRM){
-        $uri = $uri.insert(8,"vsrm.")
-    }
+  Use -shortURI to exclude Project
+  Use -VSRM for API calls for calls toward Visual Studio Release Management
+  #>
+  param (
+      [string]$ProjectName = "BF%20Estimate%20Planning",
+      [string]$OrganizationName = "rw2",
+      [switch]$ShortURI,
+      [switch]$VSRM
+  )
 
-    return $uri
+  $uri = "https://dev.azure.com/$OrganizationName"
+  
+  if(-not $ShortURI){
+      $uri = "$uri/$ProjectName"
+  }
+  if($VSRM){
+      $uri = $uri.insert(8,"vsrm.")
+  }
+
+  return $uri
 }
 
 
@@ -46,15 +56,103 @@ function Initial-AzURI {
 ##  Fork and create new repo for customer 
 ##  Upload customization and commit to new repo
 ##  Soft delete the repo
-function Fork-AzGitRepo {
+function Get-AzProject{
+  <#
+  .SYNOPSIS
+  Get DevOps project by name or id. Outputs Project name and id.
 
+  Select -list to see all projects currently viewable
+  #>
+  [cmdletbinding(DefaultParameterSetName='listProject')]
+  param(
+    [parameter(mandatory=$true)]
+    $authz,
+    [parameter(ParameterSetName='getProject')]
+    $projectName="BF%20Estimate%20Planning",
+    [parameter(Mandatory=$true,
+      ParameterSetName='listProject')]
+    [boolean]$list,
+    $OrganizationName
+  )
+  
+  #initialize web call
+  $uri = Initialize-AzURI -OrganizationName $OrganizationName -ShortURI
+  $api = "_apis/projects/$projectName`?api-version=5.1"
+  #get result based on cmd parameters
+  $result = $(invoke-restmethod -method get -uri "$uri/$api" -Headers $authz).value | Select-Object name,id
+
+  return $result
+}
+function Get-AzGitRepo{
+  <#
+  .SYNOPSIS
+  Get DevOps repo by Repo name or ID. Outputs in name and id.
+
+  Use -raw for output straight from REST call
+  #>
+  param(
+    [Parameter(Mandatory=$true)]
+    $authz,
+    [Parameter(Mandatory=$true)]
+    $repoName,
+    $organizationName,
+    $projectName,
+    [boolean]$raw
+  )
+  
+  #initialize web call
+  $uri = Initialize-AzURI -OrganizationName $OrganizationName -ProjectName $projectName
+  $api = "_apis/git/repositories/$repoName`?api-version=5.0"
+  #get result
+  if ($raw){
+    $result = $(Invoke-RestMethod -method get -Uri "$uri/$api" -Headers $authz).value
+  }
+  else {
+    $result = $(Invoke-RestMethod -method get -Uri "$uri/$api" -Headers $authz).value | Select-Object name,id
+  }
+
+  return $result
+}
+function Fork-AzGitRepo {
+  param(
+    [Parameter(Mandatory=$True)]
+    $authz,
+    [Parameter(Mandator=$True)]
+    $clientName,
+    $sourceRef="refs/heads/master",
+    $organizationName,
+    $projectName,
+    $repoName
+  )
+
+  #initialize web call
+  $uri = Initialize-AzURI -OrganizationName $organizationName -ProjectName $projectName
+  $api = "_apis/git/repositories?sourceRef=$sourceRef&api-version=5.0"
+  #get project ID
+  $projectId = $(Get-AzProject -projectName $projectName -OrganizationName $organizationName -Authz $authz).id
+  #get repository to be forked
+  $repo = Get-AzGitRepo -repoName $repoName -authz $authZ -projectName $projectName -organizationName $organizationName -raw
+  $repoJson = $repo | ConvertTo-Json
+  #build REST body 
+  $body = @"
+  {
+    "name": "$repoName",
+    "project": {
+      "id": "$projectId"
+    },
+    "parentRepository": $repoJson
+  }
+"@
+
+  #invoke request
+  Invoke-RestMethod -method post -Uri "$uri/$api" -Headers $authz -body $body -ContentType application/json 
 }
 
 function Push-AzGitRepo {
 
 }
 
-function Delete-AzGitRepo {
+function Remove-AzGitRepo {
     
 }
 ###Git list repositories
